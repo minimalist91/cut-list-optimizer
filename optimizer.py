@@ -13,16 +13,16 @@ def optimize(parts, stock_length, kerf, end_trim):
     Returns:
         groups = list of dicts:
                  {
-                   "bar":     [(name, length), ...],   # the cutting pattern
-                   "count":   int,                      # how many bars share this pattern
-                   "offcut":  int,                      # off-cut length in mm
+                   "bar":     [(name, length), ...],
+                   "count":   int,
+                   "offcut":  int,
                  }
         stats  = dict with summary numbers
     """
 
     usable = stock_length - (2 * end_trim)
 
-    # ── Expand parts into individual pieces ──────────────────────
+    # Expand parts into individual pieces
     pieces = []
     for name, length, qty in parts:
         if length <= 0 or qty <= 0:
@@ -38,9 +38,9 @@ def optimize(parts, stock_length, kerf, end_trim):
     # Sort largest first (FFD)
     pieces.sort(key=lambda x: x[1], reverse=True)
 
-    # ── Bin-packing ───────────────────────────────────────────────
-    bars      = []   # each entry: list of (name, length)
-    remaining = []   # remaining space on each bar
+    # Bin-packing loop
+    bars      = []
+    remaining = []
 
     for name, length in pieces:
         placed = False
@@ -54,17 +54,11 @@ def optimize(parts, stock_length, kerf, end_trim):
             bars.append([(name, length)])
             remaining.append(usable - length - kerf)
 
-    # ── Group identical patterns ──────────────────────────────────
-    # Two bars have the same pattern if their piece list is identical
-    # (same names, same lengths, same order — FFD guarantees order is consistent)
-    # We use a tuple of the bar contents as a hashable key.
-
-    pattern_map = {}   # pattern_key -> {"bar": [...], "count": N, "offcut": mm}
-
+    # Group identical patterns
+    pattern_map = {}
     for i, bar in enumerate(bars):
-        offcut = remaining[i] + kerf  # add back one kerf (no cut after last piece)
-        key    = tuple(bar)           # tuples are hashable, lists are not
-
+        offcut = remaining[i] + kerf
+        key    = tuple(bar)
         if key in pattern_map:
             pattern_map[key]["count"] += 1
         else:
@@ -74,17 +68,16 @@ def optimize(parts, stock_length, kerf, end_trim):
                 "offcut": offcut,
             }
 
-    # Return as a list sorted by count descending (most common pattern first)
     groups = sorted(pattern_map.values(), key=lambda g: g["count"], reverse=True)
 
-    # ── Statistics ────────────────────────────────────────────────
-    total_bars     = len(bars)
-    total_material = total_bars * stock_length
-    total_used     = sum(length for bar in bars for _, length in bar)
-    total_waste    = total_material - total_used
-    utilisation    = round(total_used / total_material * 100, 1) if total_material > 0 else 0
-    total_pieces   = sum(len(bar) for bar in bars)
-    unique_patterns= len(groups)
+    # Statistics
+    total_bars      = len(bars)
+    total_material  = total_bars * stock_length
+    total_used      = sum(length for bar in bars for _, length in bar)
+    total_waste     = total_material - total_used
+    utilisation     = round(total_used / total_material * 100, 1) if total_material > 0 else 0
+    total_pieces    = sum(len(bar) for bar in bars)
+    unique_patterns = len(groups)
 
     stats = {
         "total_bars":      total_bars,

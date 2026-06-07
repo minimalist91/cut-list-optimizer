@@ -27,6 +27,7 @@ class CutListApp(ctk.CTk):
 
         self.part_rows    = []
         self.part_colours = {}
+
         # Storage for last optimizer run (used by PDF/Print)
         self._last_groups     = None
         self._last_stats      = None
@@ -47,12 +48,16 @@ class CutListApp(ctk.CTk):
         h = ctk.CTkFrame(self, height=55, corner_radius=0)
         h.pack(fill="x")
         h.pack_propagate(False)
-        ctk.CTkLabel(h, text="✂  Cut List Optimizer",
-                     font=ctk.CTkFont(size=22, weight="bold"),
-                     text_color="white").pack(side="left", padx=20, pady=10)
-        ctk.CTkLabel(h, text="Identical bar patterns grouped automatically",
-                     font=ctk.CTkFont(size=11),
-                     text_color="#ccddff").pack(side="left")
+        ctk.CTkLabel(
+            h, text="✂  Cut List Optimizer",
+            font=ctk.CTkFont(size=22, weight="bold"),
+            text_color="white"
+        ).pack(side="left", padx=20, pady=10)
+        ctk.CTkLabel(
+            h, text="Identical bar patterns grouped automatically",
+            font=ctk.CTkFont(size=11),
+            text_color="#ccddff"
+        ).pack(side="left")
 
     # ── SETTINGS BAR ──────────────────────────────────────────────
     def _build_settings(self):
@@ -63,19 +68,21 @@ class CutListApp(ctk.CTk):
         def field(parent, label, default, width=90):
             f = ctk.CTkFrame(parent, fg_color="transparent")
             f.pack(side="left", padx=15, pady=8)
-            ctk.CTkLabel(f, text=label, font=ctk.CTkFont(size=11),
-                         text_color="#555").pack(anchor="w")
+            ctk.CTkLabel(
+                f, text=label,
+                font=ctk.CTkFont(size=11),
+                text_color="#555"
+            ).pack(anchor="w")
             e = ctk.CTkEntry(f, width=width, height=28)
             e.insert(0, default)
             e.pack()
             return e
 
-        # Job name field — wider than the others
         self.input_job_name   = field(bar, "Job Name", "My Cut List Job", width=200)
         self.input_stock_len  = field(bar, "Stock Length (mm)", "3000")
-        self.input_kerf       = field(bar, "Blade Kerf (mm)",   "3")
-        self.input_min_offcut = field(bar, "Min Off-cut (mm)",  "50")
-        self.input_end_trim   = field(bar, "End Trim (mm)",     "5")
+        self.input_kerf       = field(bar, "Blade Kerf (mm)", "3")
+        self.input_min_offcut = field(bar, "Min Off-cut (mm)", "50")
+        self.input_end_trim   = field(bar, "End Trim (mm)", "5")
 
     # ── MAIN AREA ─────────────────────────────────────────────────
     def _build_main_area(self):
@@ -90,26 +97,34 @@ class CutListApp(ctk.CTk):
         panel.pack(side="left", fill="both", padx=(0, 6))
         panel.pack_propagate(False)
 
-        ctk.CTkLabel(panel, text="Parts List",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(pady=(10, 0))
+        ctk.CTkLabel(
+            panel, text="Parts List",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=(10, 0))
 
         hdr = ctk.CTkFrame(panel, fg_color="transparent")
         hdr.pack(fill="x", padx=10, pady=(4, 0))
         for text, w in [("Part Name", 148), ("Length (mm)", 98), ("Qty", 58)]:
-            ctk.CTkLabel(hdr, text=text, width=w,
-                         font=ctk.CTkFont(size=11, weight="bold"),
-                         anchor="w").pack(side="left", padx=2)
+            ctk.CTkLabel(
+                hdr, text=text, width=w,
+                font=ctk.CTkFont(size=11, weight="bold"),
+                anchor="w"
+            ).pack(side="left", padx=2)
 
         self.rows_frame = ctk.CTkScrollableFrame(panel, fg_color="transparent")
         self.rows_frame.pack(fill="both", expand=True, padx=10, pady=4)
 
         btns = ctk.CTkFrame(panel, fg_color="transparent")
         btns.pack(fill="x", padx=10, pady=(0, 10))
-        ctk.CTkButton(btns, text="+ Add Row", width=110,
-                      command=self._add_part_row).pack(side="left", padx=(0, 5))
-        ctk.CTkButton(btns, text="✕ Clear All", width=110,
-                      fg_color="#e74c3c", hover_color="#c0392b",
-                      command=self._clear_all).pack(side="left")
+        ctk.CTkButton(
+            btns, text="+ Add Row", width=110,
+            command=self._add_part_row
+        ).pack(side="left", padx=(0, 5))
+        ctk.CTkButton(
+            btns, text="✕ Clear All", width=110,
+            fg_color="#e74c3c", hover_color="#c0392b",
+            command=self._clear_all
+        ).pack(side="left")
 
     def _add_part_row(self):
         row = ctk.CTkFrame(self.rows_frame, fg_color="transparent")
@@ -120,12 +135,15 @@ class CutListApp(ctk.CTk):
         name.pack(side="left", padx=2)
         length.pack(side="left", padx=2)
         qty.pack(side="left", padx=2)
-        ctk.CTkButton(row, text="✕", width=28, height=28,
-                      fg_color="#e74c3c", hover_color="#c0392b",
-                      command=lambda f=row: self._delete_row(f)
-                      ).pack(side="left", padx=2)
-        self.part_rows.append({"frame": row, "name": name,
-                                "length": length, "qty": qty})
+        ctk.CTkButton(
+            row, text="✕", width=28, height=28,
+            fg_color="#e74c3c", hover_color="#c0392b",
+            command=lambda f=row: self._delete_row(f)
+        ).pack(side="left", padx=2)
+        self.part_rows.append({
+            "frame": row, "name": name,
+            "length": length, "qty": qty
+        })
 
     def _delete_row(self, frame):
         self.part_rows = [r for r in self.part_rows if r["frame"] != frame]
@@ -141,24 +159,32 @@ class CutListApp(ctk.CTk):
         panel = ctk.CTkFrame(parent)
         panel.pack(side="left", fill="both", expand=True)
 
-        ctk.CTkLabel(panel, text="Optimized Cut Plan",
-                     font=ctk.CTkFont(size=14, weight="bold")).pack(pady=(10, 0))
+        ctk.CTkLabel(
+            panel, text="Optimized Cut Plan",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack(pady=(10, 0))
 
         # Summary strip
-        self.stats_bar = ctk.CTkFrame(panel, fg_color="#e8f4e8",
-                                       corner_radius=8, height=36)
+        self.stats_bar = ctk.CTkFrame(
+            panel, fg_color="#e8f4e8", corner_radius=8, height=36)
         self.stats_bar.pack(fill="x", padx=10, pady=(4, 0))
         self.stats_bar.pack_propagate(False)
 
-        self.lbl_bars     = ctk.CTkLabel(self.stats_bar, text="Bars: —",
-                                          font=ctk.CTkFont(size=12, weight="bold"))
-        self.lbl_patterns = ctk.CTkLabel(self.stats_bar, text="Unique patterns: —",
-                                          font=ctk.CTkFont(size=12))
-        self.lbl_util     = ctk.CTkLabel(self.stats_bar, text="Utilisation: —",
-                                          font=ctk.CTkFont(size=12))
-        self.lbl_waste    = ctk.CTkLabel(self.stats_bar, text="Waste: —",
-                                          font=ctk.CTkFont(size=12))
-        for lbl in [self.lbl_bars, self.lbl_patterns, self.lbl_util, self.lbl_waste]:
+        self.lbl_bars     = ctk.CTkLabel(
+            self.stats_bar, text="Bars: —",
+            font=ctk.CTkFont(size=12, weight="bold"))
+        self.lbl_patterns = ctk.CTkLabel(
+            self.stats_bar, text="Unique patterns: —",
+            font=ctk.CTkFont(size=12))
+        self.lbl_util     = ctk.CTkLabel(
+            self.stats_bar, text="Utilisation: —",
+            font=ctk.CTkFont(size=12))
+        self.lbl_waste    = ctk.CTkLabel(
+            self.stats_bar, text="Waste: —",
+            font=ctk.CTkFont(size=12))
+
+        for lbl in [self.lbl_bars, self.lbl_patterns,
+                    self.lbl_util, self.lbl_waste]:
             lbl.pack(side="left", padx=12, pady=6)
 
         # Canvas + scrollbar
@@ -166,18 +192,21 @@ class CutListApp(ctk.CTk):
         canvas_frame.pack(fill="both", expand=True, padx=10, pady=6)
 
         self.canvas = Canvas(canvas_frame, bg="#f7f9fb", highlightthickness=0)
-        self.scrollbar = Scrollbar(canvas_frame, orient="vertical",
-                                   command=self.canvas.yview)
+        self.scrollbar = Scrollbar(
+            canvas_frame, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        self.canvas.bind("<MouseWheel>",
-                         lambda e: self.canvas.yview_scroll(-1*(e.delta//120), "units"))
-        self.canvas.bind("<Button-4>",
-                         lambda e: self.canvas.yview_scroll(-1, "units"))
-        self.canvas.bind("<Button-5>",
-                         lambda e: self.canvas.yview_scroll(1, "units"))
+        self.canvas.bind(
+            "<MouseWheel>",
+            lambda e: self.canvas.yview_scroll(-1*(e.delta//120), "units"))
+        self.canvas.bind(
+            "<Button-4>",
+            lambda e: self.canvas.yview_scroll(-1, "units"))
+        self.canvas.bind(
+            "<Button-5>",
+            lambda e: self.canvas.yview_scroll(1, "units"))
 
         self._canvas_placeholder()
 
@@ -195,7 +224,6 @@ class CutListApp(ctk.CTk):
         footer.pack(fill="x", side="bottom")
         footer.pack_propagate(False)
 
-        # Run button
         self.run_btn = ctk.CTkButton(
             footer, text="▶  Run Optimizer",
             width=200, height=36,
@@ -205,24 +233,22 @@ class CutListApp(ctk.CTk):
         )
         self.run_btn.pack(side="left", padx=(20, 8), pady=9)
 
-        # Export PDF button
         self.pdf_btn = ctk.CTkButton(
             footer, text="⬇  Export PDF",
             width=150, height=36,
             font=ctk.CTkFont(size=13, weight="bold"),
             fg_color="#2980b9", hover_color="#2471a3",
-            state="disabled",          # greyed out until optimizer has run
+            state="disabled",
             command=self._export_pdf
         )
         self.pdf_btn.pack(side="left", padx=(0, 8), pady=9)
 
-        # Print button
         self.print_btn = ctk.CTkButton(
             footer, text="🖨  Print",
             width=120, height=36,
             font=ctk.CTkFont(size=13, weight="bold"),
             fg_color="#8e44ad", hover_color="#7d3c98",
-            state="disabled",          # greyed out until optimizer has run
+            state="disabled",
             command=self._print_pdf
         )
         self.print_btn.pack(side="left", padx=(0, 8), pady=9)
@@ -249,12 +275,6 @@ class CutListApp(ctk.CTk):
         except ValueError:
             self._err("Settings must all be whole numbers.")
             return
-        # Store results for PDF/Print access
-        self._last_groups    = None
-        self._last_stats     = None
-        self._last_stock_len = stock_len
-        self._last_end_trim  = end_trim
-        self._last_min_offcut= min_offcut
 
         # Read parts
         parts = []
@@ -265,14 +285,17 @@ class CutListApp(ctk.CTk):
             if not name and not length and not qty:
                 continue
             if not name:
-                self._err("A row is missing a part name."); return
+                self._err("A row is missing a part name.")
+                return
             try:
                 parts.append((name, int(length), int(qty)))
             except ValueError:
-                self._err(f"Invalid length or qty for '{name}'."); return
+                self._err(f"Invalid length or qty for '{name}'.")
+                return
 
         if not parts:
-            self._err("Add at least one part."); return
+            self._err("Add at least one part.")
+            return
 
         self.status.configure(text="Optimizing...", text_color="#555")
         self.update()
@@ -282,9 +305,13 @@ class CutListApp(ctk.CTk):
         if not groups:
             self._err("No parts could be packed — check lengths vs stock length.")
             return
-        # Save for PDF/Print
-        self._last_groups = groups
-        self._last_stats  = stats
+
+        # Save results for PDF/Print
+        self._last_groups     = groups
+        self._last_stats      = stats
+        self._last_stock_len  = stock_len
+        self._last_end_trim   = end_trim
+        self._last_min_offcut = min_offcut
 
         # Assign colours to part names
         self.part_colours = {}
@@ -306,11 +333,13 @@ class CutListApp(ctk.CTk):
             text=f"Waste: {stats['total_waste']:,} mm")
 
         self._draw_results(groups, stats, stock_len, end_trim, min_offcut)
+
         self.status.configure(
             text=f"✔ Done — {stats['total_bars']} bars in "
                  f"{stats['unique_patterns']} unique pattern(s).",
             text_color="#27ae60")
-        # Enable PDF and Print buttons now that we have results
+
+        # Enable PDF and Print buttons
         self.pdf_btn.configure(state="normal")
         self.print_btn.configure(state="normal")
 
@@ -321,12 +350,12 @@ class CutListApp(ctk.CTk):
         PAD_X   = 16
         BAR_H   = 56
         GAP     = 14
-        LABEL_W = 70    # space for "×12" count badge on the left
-        INFO_W  = 60    # space for utilisation % on the right
+        LABEL_W = 70
+        INFO_W  = 60
 
-        cw       = max(self.canvas.winfo_width(), 900)
+        cw         = max(self.canvas.winfo_width(), 900)
         bar_draw_w = cw - PAD_X*2 - LABEL_W - INFO_W
-        usable   = stock_len - 2 * end_trim
+        usable     = stock_len - 2 * end_trim
 
         y = 16
 
@@ -339,41 +368,35 @@ class CutListApp(ctk.CTk):
             util_pct = round(bar_used / usable * 100, 1) if usable > 0 else 0
             scale    = bar_draw_w / usable if usable > 0 else 1
 
-            # ── Count badge on the left ───────────────────────────
-            # Dark navy rounded rectangle + white "×N" text
-            badge_x1 = PAD_X
-            badge_x2 = PAD_X + LABEL_W - 6
-            badge_y1 = y + 8
-            badge_y2 = y + BAR_H - 8
-
+            # Count badge
+            bx1 = PAD_X
+            bx2 = PAD_X + LABEL_W - 6
+            by1 = y + 8
+            by2 = y + BAR_H - 8
             self.canvas.create_rectangle(
-                badge_x1, badge_y1, badge_x2, badge_y2,
+                bx1, by1, bx2, by2,
                 fill="#1F3864", outline="", width=0
             )
             self.canvas.create_text(
-                (badge_x1 + badge_x2) // 2,
-                (badge_y1 + badge_y2) // 2,
+                (bx1+bx2)//2, (by1+by2)//2,
                 text=f"×{count}",
                 font=("Arial", 13, "bold"),
                 fill="white", anchor="center"
             )
 
-            # ── Piece rectangles ──────────────────────────────────
+            # Piece rectangles
             piece_x = PAD_X + LABEL_W
             for name, length in bar:
                 piece_w = max(int(length * scale), 2)
                 colour  = self.part_colours.get(name, "#DDDDDD")
-
                 self.canvas.create_rectangle(
                     piece_x, y,
                     piece_x + piece_w, y + BAR_H,
                     fill=colour, outline="#ffffff", width=1
                 )
-
-                # Part name label (only if rectangle is wide enough)
                 if piece_w > 45:
                     self.canvas.create_text(
-                        piece_x + piece_w // 2, y + BAR_H // 2 - 8,
+                        piece_x + piece_w//2, y + BAR_H//2 - 8,
                         text=name,
                         font=("Arial", 8, "bold"),
                         fill="#222", anchor="center",
@@ -381,21 +404,19 @@ class CutListApp(ctk.CTk):
                     )
                 if piece_w > 30:
                     self.canvas.create_text(
-                        piece_x + piece_w // 2, y + BAR_H // 2 + 9,
+                        piece_x + piece_w//2, y + BAR_H//2 + 9,
                         text=f"{length:,} mm",
                         font=("Arial", 7),
                         fill="#555", anchor="center"
                     )
-
                 piece_x += piece_w
 
-            # ── Off-cut rectangle ─────────────────────────────────
+            # Off-cut rectangle
             offcut_w = bar_draw_w - int(bar_used * scale)
             if offcut_w > 0:
-                is_waste     = offcut < min_offcut
-                offcut_fill  = "#FFE082" if is_waste else "#D0D0D0"
-                offcut_label = f"waste\n{offcut:,}mm" if is_waste else f"{offcut:,}mm"
-
+                is_waste    = offcut < min_offcut
+                offcut_fill = "#FFE082" if is_waste else "#D0D0D0"
+                offcut_lbl  = f"waste\n{offcut:,}mm" if is_waste else f"{offcut:,}mm"
                 self.canvas.create_rectangle(
                     piece_x, y,
                     piece_x + offcut_w, y + BAR_H,
@@ -403,28 +424,26 @@ class CutListApp(ctk.CTk):
                 )
                 if offcut_w > 24:
                     self.canvas.create_text(
-                        piece_x + offcut_w // 2, y + BAR_H // 2,
-                        text=offcut_label,
+                        piece_x + offcut_w//2, y + BAR_H//2,
+                        text=offcut_lbl,
                         font=("Arial", 7),
                         fill="#666", anchor="center"
                     )
 
-            # ── Utilisation % on the right ────────────────────────
+            # Utilisation %
             util_colour = (
                 "#27ae60" if util_pct >= 85 else
                 "#e67e22" if util_pct >= 65 else
                 "#e74c3c"
             )
             self.canvas.create_text(
-                cw - PAD_X - INFO_W // 2, y + BAR_H // 2,
+                cw - PAD_X - INFO_W//2, y + BAR_H//2,
                 text=f"{util_pct}%",
                 font=("Arial", 10, "bold"),
                 fill=util_colour, anchor="center"
             )
 
-            # ── Divider line between groups ───────────────────────
             if count > 1:
-                # Subtle dashed underline to indicate "this repeats"
                 self.canvas.create_line(
                     PAD_X, y + BAR_H + 4,
                     cw - PAD_X, y + BAR_H + 4,
@@ -433,50 +452,45 @@ class CutListApp(ctk.CTk):
 
             y += BAR_H + GAP
 
-        # ── Column labels at the very top ─────────────────────────
-        # Draw after bars so they sit above everything
+        # Column labels at top
         self.canvas.create_text(
-            PAD_X + LABEL_W // 2, 4,
+            PAD_X + LABEL_W//2, 4,
             text="Count", font=("Arial", 8, "bold"),
             fill="#888", anchor="center"
         )
         self.canvas.create_text(
-            cw - PAD_X - INFO_W // 2, 4,
+            cw - PAD_X - INFO_W//2, 4,
             text="Usage", font=("Arial", 8, "bold"),
             fill="#888", anchor="center"
         )
 
-        # ── Legend ────────────────────────────────────────────────
+        # Legend
         y += 8
         self.canvas.create_line(PAD_X, y, cw - PAD_X, y, fill="#dddddd")
         y += 10
-        self.canvas.create_text(PAD_X, y, text="Part legend:",
-                                 font=("Arial", 9, "bold"),
-                                 fill="#444", anchor="w")
+        self.canvas.create_text(
+            PAD_X, y, text="Part legend:",
+            font=("Arial", 9, "bold"), fill="#444", anchor="w")
         y += 18
 
         lx = PAD_X
         for name, colour in self.part_colours.items():
-            swatch_w = 14
-            self.canvas.create_rectangle(lx, y, lx + swatch_w, y + 14,
-                                          fill=colour, outline="#aaa")
-            self.canvas.create_text(lx + swatch_w + 4, y + 7,
-                                     text=name, font=("Arial", 9),
-                                     fill="#333", anchor="w")
-            lx += swatch_w + len(name) * 7 + 20
+            self.canvas.create_rectangle(
+                lx, y, lx+14, y+14,
+                fill=colour, outline="#aaa")
+            self.canvas.create_text(
+                lx+18, y+7, text=name,
+                font=("Arial", 9), fill="#333", anchor="w")
+            lx += 14 + len(name)*7 + 20
             if lx > cw - 120:
-                lx = PAD_X
-                y += 22
+                lx  = PAD_X
+                y  += 22
 
         y += 34
         self.canvas.configure(scrollregion=(0, 0, cw, y))
 
-    def _err(self, msg):
-        self.status.configure(text=f"⚠  {msg}", text_color="#e74c3c")
-
     # ── EXPORT PDF ────────────────────────────────────────────────
     def _export_pdf(self):
-        # Check we have results to export
         if not self._last_groups:
             self._err("Run the optimizer first.")
             return
@@ -484,47 +498,44 @@ class CutListApp(ctk.CTk):
         from tkinter import filedialog
         import os
 
-        # Ask the user where to save the file
         filepath = filedialog.asksaveasfilename(
             defaultextension=".pdf",
             filetypes=[("PDF files", "*.pdf")],
             initialfile=f"{self.input_job_name.get() or 'CutList'}.pdf",
             title="Save Cut List PDF"
         )
-
         if not filepath:
-            return   # user cancelled
+            return
 
         try:
             from pdf_export import generate_pdf
             generate_pdf(
-                filepath      = filepath,
-                job_name      = self.input_job_name.get() or "Cut List",
-                groups        = self._last_groups,
-                stats         = self._last_stats,
-                stock_len     = self._last_stock_len,
-                end_trim      = self._last_end_trim,
-                min_offcut    = self._last_min_offcut,
+                filepath   = filepath,
+                job_name   = self.input_job_name.get() or "Cut List",
+                groups     = self._last_groups,
+                stats      = self._last_stats,
+                stock_len  = self._last_stock_len,
+                end_trim   = self._last_end_trim,
+                min_offcut = self._last_min_offcut,
             )
             self.status.configure(
-                text=f"✔ PDF saved to {os.path.basename(filepath)}",
+                text=f"✔ PDF saved: {os.path.basename(filepath)}",
                 text_color="#2980b9")
 
-            # Open the PDF automatically so the user can see it
+            # Open PDF automatically
             import subprocess, sys
             if sys.platform == "darwin":
-                subprocess.run(["open", filepath])         # Mac
+                subprocess.run(["open", filepath])
             elif sys.platform == "win32":
-                os.startfile(filepath)                     # Windows
+                os.startfile(filepath)
             else:
-                subprocess.run(["xdg-open", filepath])     # Linux
+                subprocess.run(["xdg-open", filepath])
 
         except Exception as e:
             self._err(f"PDF error: {e}")
 
     # ── PRINT ─────────────────────────────────────────────────────
     def _print_pdf(self):
-        # We generate a temporary PDF then send it to the printer
         if not self._last_groups:
             self._err("Run the optimizer first.")
             return
@@ -534,46 +545,38 @@ class CutListApp(ctk.CTk):
         try:
             from pdf_export import generate_pdf
 
-            # Save to a temp file
-            with tempfile.NamedTemporaryFile(suffix=".pdf",
-                                             delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
                 tmp_path = tmp.name
 
             generate_pdf(
-                filepath      = tmp_path,
-                job_name      = self.input_job_name.get() or "Cut List",
-                groups        = self._last_groups,
-                stats         = self._last_stats,
-                stock_len     = self._last_stock_len,
-                end_trim      = self._last_end_trim,
-                min_offcut    = self._last_min_offcut,
+                filepath   = tmp_path,
+                job_name   = self.input_job_name.get() or "Cut List",
+                groups     = self._last_groups,
+                stats      = self._last_stats,
+                stock_len  = self._last_stock_len,
+                end_trim   = self._last_end_trim,
+                min_offcut = self._last_min_offcut,
             )
 
-            # Send to printer
             if sys.platform == "darwin":
-                # Mac: lpr sends directly to the default printer
                 subprocess.run(["lpr", tmp_path])
-                self.status.configure(
-                    text="✔ Sent to printer.",
-                    text_color="#8e44ad")
             elif sys.platform == "win32":
-                # Windows: open PDF and trigger print dialog
                 os.startfile(tmp_path, "print")
-                self.status.configure(
-                    text="✔ Sent to printer.",
-                    text_color="#8e44ad")
             else:
                 subprocess.run(["lpr", tmp_path])
-                self.status.configure(
-                    text="✔ Sent to printer.",
-                    text_color="#8e44ad")
+
+            self.status.configure(
+                text="✔ Sent to printer.", text_color="#8e44ad")
 
         except Exception as e:
             self._err(f"Print error: {e}")
 
+    # ── ERROR HELPER ──────────────────────────────────────────────
     def _err(self, msg):
         self.status.configure(text=f"⚠  {msg}", text_color="#e74c3c")
 
+
+# ── Launch ────────────────────────────────────────────────────────
 if __name__ == "__main__":
     app = CutListApp()
     app.mainloop()
