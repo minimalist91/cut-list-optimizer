@@ -7,12 +7,12 @@ name: Build Windows EXE
 
 on:
   push:
-    branches: [ main ]      # runs every time you push to main
-  workflow_dispatch:         # also lets you trigger it manually
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest  # GitHub spins up a real Windows machine
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -25,11 +25,25 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install customtkinter openpyxl pyinstaller
+          pip install customtkinter openpyxl pyinstaller reportlab
 
       - name: Build EXE with PyInstaller
         run: |
-          pyinstaller --onefile --windowed --name CutListOptimizer main.py
+          pyinstaller --onefile --windowed --name CutListOptimizer ^
+            --hidden-import reportlab ^
+            --hidden-import reportlab.lib ^
+            --hidden-import reportlab.lib.pagesizes ^
+            --hidden-import reportlab.lib.colors ^
+            --hidden-import reportlab.lib.units ^
+            --hidden-import reportlab.lib.utils ^
+            --hidden-import reportlab.pdfgen ^
+            --hidden-import reportlab.pdfgen.canvas ^
+            --hidden-import customtkinter ^
+            --collect-all customtkinter ^
+            --collect-all reportlab ^
+            --add-data "optimizer.py;." ^
+            --add-data "pdf_export.py;." ^
+            main.py
 
       - name: Upload EXE as artifact
         uses: actions/upload-artifact@v4
