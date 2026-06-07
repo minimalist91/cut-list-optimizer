@@ -1,0 +1,38 @@
+# build.yml
+# This runs on GitHub's Windows machines every time you push code.
+# It installs Python, installs your libraries, builds the .exe,
+# and makes it available to download.
+
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]      # runs every time you push to main
+  workflow_dispatch:         # also lets you trigger it manually
+
+jobs:
+  build:
+    runs-on: windows-latest  # GitHub spins up a real Windows machine
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install customtkinter openpyxl pyinstaller
+
+      - name: Build EXE with PyInstaller
+        run: |
+          pyinstaller --onefile --windowed --name CutListOptimizer main.py
+
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CutListOptimizer-Windows
+          path: dist/CutListOptimizer.exe
