@@ -27,6 +27,12 @@ class CutListApp(ctk.CTk):
 
         self.part_rows    = []
         self.part_colours = {}
+        # Storage for last optimizer run (used by PDF/Print)
+        self._last_groups     = None
+        self._last_stats      = None
+        self._last_stock_len  = 3000
+        self._last_end_trim   = 5
+        self._last_min_offcut = 50
 
         self._build_header()
         self._build_settings()
@@ -64,6 +70,8 @@ class CutListApp(ctk.CTk):
             e.pack()
             return e
 
+        # Job name field — wider than the others
+        self.input_job_name   = field(bar, "Job Name", "My Cut List Job", width=200)
         self.input_stock_len  = field(bar, "Stock Length (mm)", "3000")
         self.input_kerf       = field(bar, "Blade Kerf (mm)",   "3")
         self.input_min_offcut = field(bar, "Min Off-cut (mm)",  "50")
@@ -187,6 +195,7 @@ class CutListApp(ctk.CTk):
         footer.pack(fill="x", side="bottom")
         footer.pack_propagate(False)
 
+        # Run button
         self.run_btn = ctk.CTkButton(
             footer, text="▶  Run Optimizer",
             width=200, height=36,
@@ -194,7 +203,30 @@ class CutListApp(ctk.CTk):
             fg_color="#27ae60", hover_color="#219a52",
             command=self._run
         )
-        self.run_btn.pack(side="left", padx=20, pady=9)
+        self.run_btn.pack(side="left", padx=(20, 8), pady=9)
+
+        # Export PDF button
+        self.pdf_btn = ctk.CTkButton(
+            footer, text="⬇  Export PDF",
+            width=150, height=36,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color="#2980b9", hover_color="#2471a3",
+            state="disabled",          # greyed out until optimizer has run
+            command=self._export_pdf
+        )
+        self.pdf_btn.pack(side="left", padx=(0, 8), pady=9)
+
+        # Print button
+        self.print_btn = ctk.CTkButton(
+            footer, text="🖨  Print",
+            width=120, height=36,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            fg_color="#8e44ad", hover_color="#7d3c98",
+            state="disabled",          # greyed out until optimizer has run
+            command=self._print_pdf
+        )
+        self.print_btn.pack(side="left", padx=(0, 8), pady=9)
+
         self.status = ctk.CTkLabel(footer, text="", font=ctk.CTkFont(size=12))
         self.status.pack(side="left", padx=10)
 
@@ -217,6 +249,12 @@ class CutListApp(ctk.CTk):
         except ValueError:
             self._err("Settings must all be whole numbers.")
             return
+        # Store results for PDF/Print access
+        self._last_groups    = None
+        self._last_stats     = None
+        self._last_stock_len = stock_len
+        self._last_end_trim  = end_trim
+        self._last_min_offcut= min_offcut
 
         # Read parts
         parts = []
@@ -244,6 +282,9 @@ class CutListApp(ctk.CTk):
         if not groups:
             self._err("No parts could be packed — check lengths vs stock length.")
             return
+        # Save for PDF/Print
+        self._last_groups = groups
+        self._last_stats  = stats
 
         # Assign colours to part names
         self.part_colours = {}
@@ -269,6 +310,9 @@ class CutListApp(ctk.CTk):
             text=f"✔ Done — {stats['total_bars']} bars in "
                  f"{stats['unique_patterns']} unique pattern(s).",
             text_color="#27ae60")
+        # Enable PDF and Print buttons now that we have results
+        self.pdf_btn.configure(state="normal")
+        self.print_btn.configure(state="normal")
 
     # ── CANVAS DRAWING ────────────────────────────────────────────
     def _draw_results(self, groups, stats, stock_len, end_trim, min_offcut):
@@ -430,6 +474,105 @@ class CutListApp(ctk.CTk):
     def _err(self, msg):
         self.status.configure(text=f"⚠  {msg}", text_color="#e74c3c")
 
+    # ── EXPORT PDF ────────────────────────────────────────────────
+    def _export_pdf(self):
+        # Check we have results to export
+        if not self._last_groups:
+            self._err("Run the optimizer first.")
+            return
+
+        from tkinter import filedialog
+        import os
+
+        # Ask the user where to save the file
+        filepath = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf")],
+            initialfile=f"{self.input_job_name.get() or 'CutList'}.pdf",
+            title="Save Cut List PDF"
+        )
+
+        if not filepath:
+            return   # user cancelled
+
+        try:
+            from pdf_export import generate_pdf
+            generate_pdf(
+                filepath      = filepath,
+                job_name      = self.input_job_name.get() or "Cut List",
+                groups        = self._last_groups,
+                stats         = self._last_stats,
+                stock_len     = self._last_stock_len,
+                end_trim      = self._last_end_trim,
+                min_offcut    = self._last_min_offcut,
+            )
+            self.status.configure(
+                text=f"✔ PDF saved to {os.path.basename(filepath)}",
+                text_color="#2980b9")
+
+            # Open the PDF automatically so the user can see it
+            import subprocess, sys
+            if sys.platform == "darwin":
+                subprocess.run(["open", filepath])         # Mac
+            elif sys.platform == "win32":
+                os.startfile(filepath)                     # Windows
+            else:
+                subprocess.run(["xdg-open", filepath])     # Linux
+
+        except Exception as e:
+            self._err(f"PDF error: {e}")
+
+    # ── PRINT ─────────────────────────────────────────────────────
+    def _print_pdf(self):
+        # We generate a temporary PDF then send it to the printer
+        if not self._last_groups:
+            self._err("Run the optimizer first.")
+            return
+
+        import tempfile, os, subprocess, sys
+
+        try:
+            from pdf_export import generate_pdf
+
+            # Save to a temp file
+            with tempfile.NamedTemporaryFile(suffix=".pdf",
+                                             delete=False) as tmp:
+                tmp_path = tmp.name
+
+            generate_pdf(
+                filepath      = tmp_path,
+                job_name      = self.input_job_name.get() or "Cut List",
+                groups        = self._last_groups,
+                stats         = self._last_stats,
+                stock_len     = self._last_stock_len,
+                end_trim      = self._last_end_trim,
+                min_offcut    = self._last_min_offcut,
+            )
+
+            # Send to printer
+            if sys.platform == "darwin":
+                # Mac: lpr sends directly to the default printer
+                subprocess.run(["lpr", tmp_path])
+                self.status.configure(
+                    text="✔ Sent to printer.",
+                    text_color="#8e44ad")
+            elif sys.platform == "win32":
+                # Windows: open PDF and trigger print dialog
+                os.startfile(tmp_path, "print")
+                self.status.configure(
+                    text="✔ Sent to printer.",
+                    text_color="#8e44ad")
+            else:
+                subprocess.run(["lpr", tmp_path])
+                self.status.configure(
+                    text="✔ Sent to printer.",
+                    text_color="#8e44ad")
+
+        except Exception as e:
+            self._err(f"Print error: {e}")
+
+    def _err(self, msg):
+        self.status.configure(text=f"⚠  {msg}", text_color="#e74c3c")
 
 if __name__ == "__main__":
     app = CutListApp()

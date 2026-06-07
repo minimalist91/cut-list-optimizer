@@ -1,0 +1,3 @@
+([('CutListOptimizer',
+   '/Users/atakat/cut_list_app/dist/CutListOptimizer',
+   'EXECUTABLE')],)
