@@ -28,7 +28,7 @@ class CutListApp(ctk.CTk):
         self.part_rows    = []
         self.part_colours = {}
 
-        # Storage for last optimizer run (used by PDF/Print)
+        # Storage for last optimizer run (used by PDF)
         self._last_groups     = None
         self._last_stats      = None
         self._last_stock_len  = 3000
@@ -243,15 +243,6 @@ class CutListApp(ctk.CTk):
         )
         self.pdf_btn.pack(side="left", padx=(0, 8), pady=9)
 
-        self.print_btn = ctk.CTkButton(
-            footer, text="🖨  Print",
-            width=120, height=36,
-            font=ctk.CTkFont(size=13, weight="bold"),
-            fg_color="#8e44ad", hover_color="#7d3c98",
-            state="disabled",
-            command=self._print_pdf
-        )
-        self.print_btn.pack(side="left", padx=(0, 8), pady=9)
 
         self.status = ctk.CTkLabel(footer, text="", font=ctk.CTkFont(size=12))
         self.status.pack(side="left", padx=10)
@@ -339,9 +330,8 @@ class CutListApp(ctk.CTk):
                  f"{stats['unique_patterns']} unique pattern(s).",
             text_color="#27ae60")
 
-        # Enable PDF and Print buttons
+        # Enable PDF button
         self.pdf_btn.configure(state="normal")
-        self.print_btn.configure(state="normal")
 
     # ── CANVAS DRAWING ────────────────────────────────────────────
     def _draw_results(self, groups, stats, stock_len, end_trim, min_offcut):
@@ -534,42 +524,6 @@ class CutListApp(ctk.CTk):
         except Exception as e:
             self._err(f"PDF error: {e}")
 
-    # ── PRINT ─────────────────────────────────────────────────────
-    def _print_pdf(self):
-        if not self._last_groups:
-            self._err("Run the optimizer first.")
-            return
-
-        import tempfile, os, subprocess, sys
-
-        try:
-            from pdf_export import generate_pdf
-
-            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
-                tmp_path = tmp.name
-
-            generate_pdf(
-                filepath   = tmp_path,
-                job_name   = self.input_job_name.get() or "Cut List",
-                groups     = self._last_groups,
-                stats      = self._last_stats,
-                stock_len  = self._last_stock_len,
-                end_trim   = self._last_end_trim,
-                min_offcut = self._last_min_offcut,
-            )
-
-            if sys.platform == "darwin":
-                subprocess.run(["lpr", tmp_path])
-            elif sys.platform == "win32":
-                os.startfile(tmp_path, "print")
-            else:
-                subprocess.run(["lpr", tmp_path])
-
-            self.status.configure(
-                text="✔ Sent to printer.", text_color="#8e44ad")
-
-        except Exception as e:
-            self._err(f"Print error: {e}")
 
     # ── ERROR HELPER ──────────────────────────────────────────────
     def _err(self, msg):
